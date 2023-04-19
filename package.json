@@ -1,0 +1,29 @@
+{
+  "name": "gnosisauctionservice",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "prepare:mainnet": "mustache config/mainnet.json subgraph.template.yaml > subgraph.yaml",
+    "prepare:goerli": "mustache config/goerli.json subgraph.template.yaml > subgraph.yaml",
+    "prepare:gnosis": "mustache config/gnosis.json subgraph.template.yaml > subgraph.yaml",
+    "prepare:polygon": "mustache config/polygon.json subgraph.template.yaml > subgraph.yaml",
+    "prepare:mumbai": "mustache config/mumbai.json subgraph.template.yaml > subgraph.yaml",
+    "deploy:gnosis": "yarn prepare:gnosis && graph deploy --product hosted-service aireshbhat/gnosisauction",
+    "deploy:goerli": "yarn prepare:goerli && graph deploy --product hosted-service aireshbhat/gnosisauctiongoerli",
+    "deploy:polygon": "yarn prepare:polygon && graph deploy --product hosted-service aireshbhat/gnosisauctionpolygon",
+    "deploy:mainnet": "yarn prepare:mainnet && graph deploy --product hosted-service aireshbhat/gnosisauctionservices",
+    "deploy:mumbai": "yarn prepare:mumbai && graph deploy --product hosted-service aireshbhat/gnosisauctionmumbai",
+    "deploy": "yarn deploy:mainnet && yarn deploy:goerli && yarn deploy:polygon && yarn deploy:gnosis && yarn deploy:mumbai",
+    "create-local": "graph create --node http://localhost:8020/ gnosisauctionservice",
+    "remove-local": "graph remove --node http://localhost:8020/ gnosisauctionservice",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 gnosisauctionservice"
+  },
+  "devDependencies": {
+    "mustache": "^4.2.0"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.28.1",
+    "@graphprotocol/graph-ts": "0.26.0"
+  }
+}
