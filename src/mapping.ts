@@ -187,7 +187,7 @@ export function handleNewAuction(event: NewAuction): void {
 	order.userId = userId;
 	order.userAddress = user.address;
 	order.volume = pricePoint.get("volume");
-	order.price =  ONE.divDecimal(pricePoint.get("price"));
+	order.price = ONE.divDecimal(pricePoint.get("price"));
 	order.save();
 	let allowListSigner = event.params.allowListData;
 	let isPrivateAuction = event.params.allowListContract.equals(
@@ -217,13 +217,17 @@ export function handleNewAuction(event: NewAuction): void {
 	auctionDetails.minFundingThreshold = event.params.minFundingThreshold;
 	auctionDetails.allowListManager = event.params.allowListContract;
 	auctionDetails.allowListSigner = allowListSigner;
-	auctionDetails.currentClearingPrice = ONE.divDecimal(pricePoint.get("price"));
+	auctionDetails.currentClearingPrice = ONE.divDecimal(
+		pricePoint.get("price")
+	);
 	auctionDetails.currentBiddingAmount = new BigInt(0);
 	auctionDetails.isAtomicClosureAllowed = isAtomicClosureAllowed;
 	auctionDetails.isPrivateAuction = isPrivateAuction;
 	auctionDetails.interestScore = new BigDecimal(new BigInt(0));
 	auctionDetails.usdAmountTraded = new BigDecimal(new BigInt(0));
 	auctionDetails.chainId = getChainHexFromName(dataSource.network());
+	auctionDetails.orders = [];
+	auctionDetails.ordersWithoutClaimed = [];
 	auctionDetails.save();
 }
 
@@ -400,12 +404,12 @@ function updateClearingOrderAndVolume(auctionId: BigInt): void {
 		}
 		currentOrder = order;
 
-		biddingTokenTotal = biddingTokenTotal.plus(order.buyAmount || ZERO);
+		biddingTokenTotal = biddingTokenTotal.plus(order.sellAmount || ZERO);
 
 		if (
 			biddingTokenTotal
-				.times(order.buyAmount)
-				.ge(order.sellAmount.times(biddingTokenAmountOfInitialOrder))
+				.divDecimal(biddingTokenAmountOfInitialOrder.toBigDecimal())
+				.ge(order.sellAmount.divDecimal(order.buyAmount.toBigDecimal()))
 		) {
 			break;
 		}
@@ -417,8 +421,12 @@ function updateClearingOrderAndVolume(auctionId: BigInt): void {
 
 	if (
 		biddingTokenTotal
-			.times(currentOrder.buyAmount)
-			.ge(currentOrder.sellAmount.times(biddingTokenAmountOfInitialOrder))
+			.divDecimal(biddingTokenAmountOfInitialOrder.toBigDecimal())
+			.ge(
+				currentOrder.sellAmount.divDecimal(
+					currentOrder.buyAmount.toBigDecimal()
+				)
+			)
 	) {
 		let uncoveredBids = biddingTokenTotal.minus(
 			auctioningTokenAmountOfInitialOrder
