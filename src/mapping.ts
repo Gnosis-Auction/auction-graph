@@ -408,7 +408,7 @@ function updateClearingOrderAndVolume(auctionId: BigInt): void {
 
 		if (
 			biddingTokenTotal
-				.divDecimal(biddingTokenAmountOfInitialOrder.toBigDecimal())
+				.divDecimal(auctioningTokenAmountOfInitialOrder.toBigDecimal())
 				.ge(order.sellAmount.divDecimal(order.buyAmount.toBigDecimal()))
 		) {
 			break;
@@ -420,8 +420,9 @@ function updateClearingOrderAndVolume(auctionId: BigInt): void {
 	}
 
 	if (
+		biddingTokenTotal.ge(ZERO) &&
 		biddingTokenTotal
-			.divDecimal(biddingTokenAmountOfInitialOrder.toBigDecimal())
+			.divDecimal(auctioningTokenAmountOfInitialOrder.toBigDecimal())
 			.ge(
 				currentOrder.sellAmount.divDecimal(
 					currentOrder.buyAmount.toBigDecimal()
