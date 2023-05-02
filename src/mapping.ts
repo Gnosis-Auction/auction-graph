@@ -37,55 +37,40 @@ const ONE = BigInt.fromI32(1);
 const TEN = BigInt.fromString("10");
 
 export function handleAuctionCleared(event: AuctionCleared): void {
-	// Entities can be loaded from the store using a string ID; this ID
-	// needs to be unique across all entities of the same type
-	// let entity = ExampleEntity.load(event.transaction.from.toHex());
-	// Entities only exist after they have been saved to the store;
-	// `null` checks allow to create entities on demand
-	// if (!entity) {
-	// 	entity = new ExampleEntity(event.transaction.from.toHex());
-	// 	// Entity fields can be set using simple assignments
-	// 	entity.count = BigInt.fromI32(0);
-	// }
-	// BigInt and BigDecimal math are supported
-	// entity.count = entity.count + BigInt.fromI32(1);
-	// Entity fields can be set based on event parameters
-	// entity.auctionId = event.params.auctionId;
-	// entity.soldAuctioningTokens = event.params.soldAuctioningTokens;
-	// Entities can be written to the store with `.save()`
-	// entity.save();
-	// Note: If a handler doesn't require existing field values, it is faster
-	// _not_ to load the entity from the store. Instead, create it fresh with
-	// `new Entity(...)`, set the fields that should be updated and save the
-	// entity back to the store. Fields that were not set or unset remain
-	// unchanged, allowing for partial updates to be applied.
-	// It is also possible to access smart contracts from mappings. For
-	// example, the contract that has emitted the event can be connected to
-	// with:
-	//
-	// let contract = Contract.bind(event.address)
-	//
-	// The following functions can then be called on this contract to access
-	// state variables and other data:
-	//
-	// - contract.FEE_DENOMINATOR(...)
-	// - contract.auctionAccessData(...)
-	// - contract.auctionAccessManager(...)
-	// - contract.auctionCounter(...)
-	// - contract.auctionData(...)
-	// - contract.claimFromParticipantOrder(...)
-	// - contract.containsOrder(...)
-	// - contract.feeNumerator(...)
-	// - contract.feeReceiverUserId(...)
-	// - contract.getSecondsRemainingInBatch(...)
-	// - contract.getUserId(...)
-	// - contract.initiateAuction(...)
-	// - contract.numUsers(...)
-	// - contract.owner(...)
-	// - contract.placeSellOrders(...)
-	// - contract.placeSellOrdersOnBehalf(...)
-	// - contract.registerUser(...)
-	// - contract.settleAuction(...)
+	const auctioningTokensSold = event.params.soldAuctioningTokens;
+	const auctionId = event.params.auctionId;
+	const biddingTokensSold = event.params.soldBiddingTokens;
+
+	let auctionDetails = AuctionDetail.load(auctionId.toString());
+	if (!auctionDetails) {
+		return;
+	}
+	const decimalAuctioningToken = auctionDetails.decimalsAuctioningToken;
+	const decimalBiddingToken = auctionDetails.decimalsBiddingToken;
+	
+	const addressAuctioningToken = auctionDetails.addressAuctioningToken;
+	const addressBiddingToken = auctionDetails.addressBiddingToken;
+
+	auctionDetails.currentClearingOrderBuyAmount = auctioningTokensSold;
+	auctionDetails.currentClearingOrderSellAmount = biddingTokensSold;
+	const pricePoint = convertToPricePoint(
+		biddingTokensSold,
+		auctioningTokensSold,
+		decimalAuctioningToken.toI32(),
+		decimalBiddingToken.toI32()
+	);
+	auctionDetails.currentClearingPrice = pricePoint.get("price");
+	auctionDetails.currentVolume = pricePoint.get("volume");
+	auctionDetails.currentBiddingAmount = biddingTokensSold;
+	auctionDetails.interestScore = pricePoint.get("volume").div(TEN.pow(<u8>decimalBiddingToken.toI32()).toBigDecimal());
+	auctionDetails.usdAmountTraded = getUsdAmountTraded(
+		addressBiddingToken,
+		addressAuctioningToken,
+		biddingTokensSold,
+		pricePoint.get("price"),
+	);
+
+	auctionDetails.save();
 }
 
 export function handleCancellationSellOrder(
@@ -237,6 +222,13 @@ function convertToPricePoint(
 	decimalsBuyToken: number,
 	decimalsSellToken: number
 ): Map<string, BigDecimal> {
+	if (buyAmount.equals(ZERO)) {
+		let pricePoint = new Map<string, BigDecimal>();
+		pricePoint.set("price", BigDecimal.fromString("0"));
+		pricePoint.set("volume", BigDecimal.fromString("1"));
+
+		return pricePoint;
+	}
 	let bidByAuctionDecimal = TEN.pow(<u8>decimalsBuyToken).divDecimal(
 		TEN.pow(<u8>decimalsSellToken).toBigDecimal()
 	);
@@ -291,6 +283,7 @@ export function handleNewSellOrder(event: NewSellOrder): void {
 	order.userAddress = user.address;
 	order.price = pricePoint.get("price");
 	order.volume = pricePoint.get("volume");
+	order.timestamp = event.block.timestamp;
 	order.save();
 
 	let orders: string[] = [];

@@ -23,6 +23,7 @@ export class Order extends Entity {
     this.set("userAddress", Value.fromBytes(Bytes.empty()));
     this.set("price", Value.fromBigDecimal(BigDecimal.zero()));
     this.set("volume", Value.fromBigDecimal(BigDecimal.zero()));
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
@@ -111,6 +112,15 @@ export class Order extends Entity {
 
   set volume(value: BigDecimal) {
     this.set("volume", Value.fromBigDecimal(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
   }
 }
 

@@ -7,6 +7,7 @@ type Order @entity {
   userAddress: Bytes!
   price: BigDecimal!
   volume: BigDecimal!
+  timestamp: BigInt!
 }
 
 type User @entity {
