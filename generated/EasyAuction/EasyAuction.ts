@@ -324,6 +324,62 @@ export class EasyAuction__auctionDataResult {
     map.set("value13", ethereum.Value.fromUnsignedBigInt(this.value13));
     return map;
   }
+
+  getAuctioningToken(): Address {
+    return this.value0;
+  }
+
+  getBiddingToken(): Address {
+    return this.value1;
+  }
+
+  getOrderCancellationEndDate(): BigInt {
+    return this.value2;
+  }
+
+  getAuctionEndDate(): BigInt {
+    return this.value3;
+  }
+
+  getInitialAuctionOrder(): Bytes {
+    return this.value4;
+  }
+
+  getMinimumBiddingAmountPerOrder(): BigInt {
+    return this.value5;
+  }
+
+  getInterimSumBidAmount(): BigInt {
+    return this.value6;
+  }
+
+  getInterimOrder(): Bytes {
+    return this.value7;
+  }
+
+  getClearingPriceOrder(): Bytes {
+    return this.value8;
+  }
+
+  getVolumeClearingPriceOrder(): BigInt {
+    return this.value9;
+  }
+
+  getMinFundingThresholdNotReached(): boolean {
+    return this.value10;
+  }
+
+  getIsAtomicClosureAllowed(): boolean {
+    return this.value11;
+  }
+
+  getFeeNumerator(): BigInt {
+    return this.value12;
+  }
+
+  getMinFundingThreshold(): BigInt {
+    return this.value13;
+  }
 }
 
 export class EasyAuction__claimFromParticipantOrderResult {
@@ -340,6 +396,14 @@ export class EasyAuction__claimFromParticipantOrderResult {
     map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
     map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
     return map;
+  }
+
+  getSumAuctioningTokenAmount(): BigInt {
+    return this.value0;
+  }
+
+  getSumBiddingTokenAmount(): BigInt {
+    return this.value1;
   }
 }
 

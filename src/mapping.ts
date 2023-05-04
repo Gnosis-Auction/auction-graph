@@ -173,6 +173,7 @@ export function handleNewAuction(event: NewAuction): void {
 	order.userAddress = user.address;
 	order.volume = pricePoint.get("volume");
 	order.price = ONE.divDecimal(pricePoint.get("price"));
+	order.timestamp = eventTimeStamp;
 	order.save();
 	let allowListSigner = event.params.allowListData;
 	let isPrivateAuction = event.params.allowListContract.equals(
@@ -211,6 +212,9 @@ export function handleNewAuction(event: NewAuction): void {
 	auctionDetails.interestScore = new BigDecimal(new BigInt(0));
 	auctionDetails.usdAmountTraded = new BigDecimal(new BigInt(0));
 	auctionDetails.chainId = getChainHexFromName(dataSource.network());
+	auctionDetails.currentVolume = BigDecimal.fromString("0");
+	auctionDetails.currentClearingOrderSellAmount = new BigInt(0);
+	auctionDetails.currentClearingOrderBuyAmount = new BigInt(0);
 	auctionDetails.orders = [];
 	auctionDetails.ordersWithoutClaimed = [];
 	auctionDetails.save();
@@ -318,6 +322,7 @@ export function handleNewUser(event: NewUser): void {
 	let userAddress = event.params.userAddress;
 	let user = new User(userId.toString());
 	user.address = userAddress;
+	user.auctions = new Array();
 	user.save();
 }
 

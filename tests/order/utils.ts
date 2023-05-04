@@ -1,0 +1,1 @@
+export const ORDER_ENTITY_TYPE = "Order";
