@@ -63,12 +63,14 @@ export function handleAuctionCleared(event: AuctionCleared): void {
 	auctionDetails.currentVolume = pricePoint.get("volume");
 	auctionDetails.currentBiddingAmount = biddingTokensSold;
 	auctionDetails.interestScore = pricePoint.get("volume").div(TEN.pow(<u8>decimalBiddingToken.toI32()).toBigDecimal());
-	auctionDetails.usdAmountTraded = getUsdAmountTraded(
-		addressBiddingToken,
-		addressAuctioningToken,
-		biddingTokensSold,
-		pricePoint.get("price"),
-	);
+	if (!pricePoint.get("price").equals(ZERO.toBigDecimal())) {
+		auctionDetails.usdAmountTraded = getUsdAmountTraded(
+			addressBiddingToken,
+			addressAuctioningToken,
+			biddingTokensSold,
+			pricePoint.get("price"),
+		);
+	}
 
 	auctionDetails.save();
 }
