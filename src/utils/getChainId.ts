@@ -9,6 +9,10 @@ function getChainHexFromName(chainName: string): string {
 		return "0x64";
 	} else if (chainName.includes("mumbai")) {
 		return "0x13881";
+	} else if (chainName.includes("avalanche")) {
+		return "0xa86a";
+	} else if (chainName.includes("fuji")) {
+		return "0xa869"
 	}
 	return "0x01";
 }
@@ -24,6 +28,10 @@ function getChainIdFromName(chainName: string): i32 {
 		return 100;
 	} else if (chainName.includes("mumbai")) {
 		return 80001;
+	} else if (chainName.includes("avalanche")) {
+		return 43114;
+	} else if (chainName.includes("fuji")) {
+		return 43113;
 	}
 	return 1;
 }
