@@ -4,21 +4,25 @@ import {
 	newMockEventWithParams,
 } from "matchstick-as/assembly/index";
 
-import { NewAuction } from "../../generated/EasyAuction/EasyAuction";
+import {
+	CancellationSellOrder,
+	NewAuction,
+	NewSellOrder,
+	NewUser,
+} from "../generated/EasyAuction/EasyAuction";
+import { addresses } from "./constants";
 
 export const easyAuctionContractAddress = Address.fromString(
-	"0x0b7fFc1f4AD541A4Ed16b40D8c37f0929158D101"
+	addresses.get("easyAuctionContract")
 );
 
 export const auctioningTokenContractAddress = Address.fromString(
-	"0x3b2a7fa9ceb3732d4b853c522490f0cd2acd4509"
+	addresses.get("auctioningTokenAddress")
 );
 
 export const biddingTokenContractAddress = Address.fromString(
-	"0x3F53802E6b65455305c3f9412C8C9118B2E86d49"
+	addresses.get("biddingTokenAddress")
 );
-
-export const AUCTION_DETAIL_ENTITY_TYPE = "AuctionDetail";
 
 export function createNewAuctionEvent(
 	auctionId: i32,
@@ -89,6 +93,72 @@ export function createNewAuctionEvent(
 	newAuctionEvent.address = easyAuctionContractAddress;
 
 	return newAuctionEvent;
+}
+
+export function createNewUserEvent(userId: i32, userAddress: string): NewUser {
+	let newUserEvent = changetype<NewUser>(
+		newMockEventWithParams([
+			new ethereum.EventParam("userId", ethereum.Value.fromI32(userId)),
+			new ethereum.EventParam(
+				"userAddress",
+				ethereum.Value.fromAddress(Address.fromString(userAddress))
+			),
+		])
+	);
+	return newUserEvent;
+}
+
+export function createNewSellOrderEvent(
+	auctionId: i32,
+	userId: i32,
+	buyAmount: BigInt,
+	sellAmount: BigInt
+): NewSellOrder {
+	let newSellOrderEvent = changetype<NewSellOrder>(
+		newMockEventWithParams([
+			new ethereum.EventParam(
+				"auctionId",
+				ethereum.Value.fromI32(auctionId)
+			),
+			new ethereum.EventParam("userId", ethereum.Value.fromI32(userId)),
+			new ethereum.EventParam(
+				"buyAmount",
+				ethereum.Value.fromUnsignedBigInt(buyAmount)
+			),
+			new ethereum.EventParam(
+				"sellAmount",
+				ethereum.Value.fromUnsignedBigInt(sellAmount)
+			),
+		])
+	);
+	return newSellOrderEvent;
+}
+
+export function createNewCancelOrderEvent(
+	auctionId: i32,
+	userId: i32,
+	buyAmount: BigInt,
+	sellAmount: BigInt
+): CancellationSellOrder {
+	let newCancelOrderEvent = changetype<CancellationSellOrder>(
+		newMockEventWithParams([
+			new ethereum.EventParam(
+				"auctionId",
+				ethereum.Value.fromI32(auctionId)
+			),
+			new ethereum.EventParam("userId", ethereum.Value.fromI32(userId)),
+			new ethereum.EventParam(
+				"buyAmount",
+				ethereum.Value.fromUnsignedBigInt(buyAmount)
+			),
+			new ethereum.EventParam(
+				"sellAmount",
+				ethereum.Value.fromUnsignedBigInt(sellAmount)
+			),
+		])
+	);
+
+	return newCancelOrderEvent;
 }
 
 export function mockAuctionDataFunctionCall(

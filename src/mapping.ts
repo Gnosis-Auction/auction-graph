@@ -91,7 +91,7 @@ export function handleCancellationSellOrder(
 	if (auctionDetails.orders) {
 		orders = auctionDetails.orders!;
 	}
-	let orderId = `${auctionId.toString()}-${sellAmount.toString()}-${buyAmount.toString()}-${userId.toString()}`;
+	let orderId = getOrderEntityId(auctionId, sellAmount, buyAmount, userId);
 	let index = orders.indexOf(orderId);
 	if (index > -1) {
 		let removedOrder = orders.splice(index, 1);
@@ -129,7 +129,7 @@ export function handleClaimedFromOrder(event: ClaimedFromOrder): void {
 	if (auctionDetails.ordersWithoutClaimed) {
 		ordersWithoutClaimed = auctionDetails.ordersWithoutClaimed!;
 	}
-	let orderId = `${auctionId.toString()}-${sellAmount.toString()}-${buyAmount.toString()}-${userId.toString()}`;
+	let orderId = getOrderEntityId(auctionId, sellAmount, buyAmount, userId);
 	// If orderId is present in the ordersWithoutClaimed array, remove it
 	let index = ordersWithoutClaimed.indexOf(orderId);
 	if (index > -1) {
@@ -222,7 +222,7 @@ export function handleNewAuction(event: NewAuction): void {
 	auctionDetails.save();
 }
 
-function convertToPricePoint(
+export function convertToPricePoint(
 	sellAmount: BigInt,
 	buyAmount: BigInt,
 	decimalsBuyToken: number,
@@ -332,7 +332,7 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
 
 export function handleUserRegistration(event: UserRegistration): void {}
 
-function getOrderEntityId(
+export function getOrderEntityId(
 	auctionId: BigInt,
 	sellAmount: BigInt,
 	buyAmount: BigInt,
