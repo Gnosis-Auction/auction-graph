@@ -13,6 +13,10 @@ function getChainHexFromName(chainName: string): string {
 		return "0xa86a";
 	} else if (chainName.includes("fuji")) {
 		return "0xa869"
+	} else if (chainName.includes("bsc")) {
+		return "0x38";
+	} else if (chainName.includes("bsc-testnet")) {
+		return "0x61";
 	}
 	return "0x01";
 }
@@ -32,6 +36,10 @@ function getChainIdFromName(chainName: string): i32 {
 		return 43114;
 	} else if (chainName.includes("fuji")) {
 		return 43113;
+	} else if (chainName.includes("bsc")) {
+		return 56;
+	} else if (chainName.includes("bsc-testnet")) {
+		return 97;
 	}
 	return 1;
 }
