@@ -6,6 +6,7 @@ import {
 
 import {
 	CancellationSellOrder,
+	ClaimedFromOrder,
 	NewAuction,
 	NewSellOrder,
 	NewUser,
@@ -141,6 +142,33 @@ export function createNewCancelOrderEvent(
 	sellAmount: BigInt
 ): CancellationSellOrder {
 	let newCancelOrderEvent = changetype<CancellationSellOrder>(
+		newMockEventWithParams([
+			new ethereum.EventParam(
+				"auctionId",
+				ethereum.Value.fromI32(auctionId)
+			),
+			new ethereum.EventParam("userId", ethereum.Value.fromI32(userId)),
+			new ethereum.EventParam(
+				"buyAmount",
+				ethereum.Value.fromUnsignedBigInt(buyAmount)
+			),
+			new ethereum.EventParam(
+				"sellAmount",
+				ethereum.Value.fromUnsignedBigInt(sellAmount)
+			),
+		])
+	);
+
+	return newCancelOrderEvent;
+}
+
+export function createNewClaimEvent(
+	auctionId: i32,
+	userId: i32,
+	buyAmount: BigInt,
+	sellAmount: BigInt
+): ClaimedFromOrder {
+	let newCancelOrderEvent = changetype<ClaimedFromOrder>(
 		newMockEventWithParams([
 			new ethereum.EventParam(
 				"auctionId",
