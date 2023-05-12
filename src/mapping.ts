@@ -47,7 +47,7 @@ export function handleAuctionCleared(event: AuctionCleared): void {
 	}
 	const decimalAuctioningToken = auctionDetails.decimalsAuctioningToken;
 	const decimalBiddingToken = auctionDetails.decimalsBiddingToken;
-	
+
 	const addressAuctioningToken = auctionDetails.addressAuctioningToken;
 	const addressBiddingToken = auctionDetails.addressBiddingToken;
 
@@ -62,13 +62,15 @@ export function handleAuctionCleared(event: AuctionCleared): void {
 	auctionDetails.currentClearingPrice = pricePoint.get("price");
 	auctionDetails.currentVolume = pricePoint.get("volume");
 	auctionDetails.currentBiddingAmount = biddingTokensSold;
-	auctionDetails.interestScore = pricePoint.get("volume").div(TEN.pow(<u8>decimalBiddingToken.toI32()).toBigDecimal());
+	auctionDetails.interestScore = pricePoint
+		.get("volume")
+		.div(TEN.pow(<u8>decimalBiddingToken.toI32()).toBigDecimal());
 	if (!pricePoint.get("price").equals(ZERO.toBigDecimal())) {
 		auctionDetails.usdAmountTraded = getUsdAmountTraded(
 			addressBiddingToken,
 			addressAuctioningToken,
 			biddingTokensSold,
-			pricePoint.get("price"),
+			pricePoint.get("price")
 		);
 	}
 
@@ -86,6 +88,7 @@ export function handleCancellationSellOrder(
 	if (!auctionDetails) {
 		return;
 	}
+	let orderIdsToDelete: Map<string, string> = new Map();
 	// Remove order from the list orders
 	let orders: string[] = [];
 	if (auctionDetails.orders) {
@@ -95,7 +98,7 @@ export function handleCancellationSellOrder(
 	let index = orders.indexOf(orderId);
 	if (index > -1) {
 		let removedOrder = orders.splice(index, 1);
-		store.remove("Order", removedOrder[0]);
+		orderIdsToDelete.set(removedOrder[0], removedOrder[0]);
 	}
 	auctionDetails.orders = orders;
 	// Remove order from the list ordersWithoutClaimed
@@ -106,9 +109,15 @@ export function handleCancellationSellOrder(
 	index = ordersWithoutClaimed.indexOf(orderId);
 	if (index > -1) {
 		let removedOrder = ordersWithoutClaimed.splice(index, 1);
-		store.remove("Order", removedOrder[0]);
+		orderIdsToDelete.set(removedOrder[0], removedOrder[0]);
 	}
 	auctionDetails.ordersWithoutClaimed = ordersWithoutClaimed;
+
+	// Remove order from the list ordersWithoutDeleted
+	orderIdsToDelete.values().forEach((orderId) => {
+		store.remove("Order", orderId);
+	});
+
 	auctionDetails.save();
 
 	updateClearingOrderAndVolume(auctionDetails.auctionId);
@@ -146,12 +155,15 @@ export function handleNewAuction(event: NewAuction): void {
 	let userId = event.params.userId;
 	let auctionId = event.params.auctionId;
 	let addressAuctioningToken = event.params._auctioningToken;
+	let addressBiddingToken = event.params._biddingToken;
+	let allowListSigner = event.params.allowListData;
+	let allowListContract = event.params.allowListContract;
+
 	let entityId = getOrderEntityId(auctionId, sellAmount, buyAmount, userId);
 	let user = User.load(userId.toString());
 	if (!user) {
 		return;
 	}
-	let addressBiddingToken = event.params._biddingToken;
 	let biddingERC20Contract = ERC20Contract.bind(addressBiddingToken);
 	let auctioningERC20Contract = ERC20Contract.bind(addressAuctioningToken);
 	let auctionContract = EasyAuction.bind(event.address);
@@ -167,6 +179,12 @@ export function handleNewAuction(event: NewAuction): void {
 		decimalAuctioningToken
 	);
 
+	let isPrivateAuction = allowListContract.equals(
+		Address.fromString("0x0000000000000000000000000000000000000000")
+	)
+		? false
+		: true;
+
 	let order = new Order(entityId);
 	order.auctionId = auctionId;
 	order.buyAmount = buyAmount;
@@ -177,12 +195,6 @@ export function handleNewAuction(event: NewAuction): void {
 	order.price = ONE.divDecimal(pricePoint.get("price"));
 	order.timestamp = eventTimeStamp;
 	order.save();
-	let allowListSigner = event.params.allowListData;
-	let isPrivateAuction = event.params.allowListContract.equals(
-		Address.fromString("0x0000000000000000000000000000000000000000")
-	)
-		? false
-		: true;
 	let auctionDetails = new AuctionDetail(auctionId.toString());
 	auctionDetails.auctionId = auctionId;
 	auctionDetails.exactOrder = order.id;

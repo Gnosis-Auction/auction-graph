@@ -7,6 +7,8 @@ import {
 	logStore,
 	test,
 } from "matchstick-as/assembly/index";
+import { BigInt, Bytes } from "@graphprotocol/graph-ts";
+
 import {
 	createNewAuctionEvent,
 	auctioningTokenContractAddress,
@@ -17,14 +19,15 @@ import {
 	createNewUserEvent,
 	createNewSellOrderEvent,
 	createNewCancelOrderEvent,
+	createNewClaimEvent,
 } from "./utils";
 import {
 	handleCancellationSellOrder,
+	handleClaimedFromOrder,
 	handleNewAuction,
 	handleNewSellOrder,
 	handleNewUser,
 } from "../src/mapping";
-import { BigInt, Bytes, store } from "@graphprotocol/graph-ts";
 import {
 	entityTypes,
 	TOKENS,
@@ -157,64 +160,111 @@ describe("Can call mappings with custom events", () => {
 		log.success("handleNewSellOrder adds order to AuctionDetail", []);
 	});
 
-	test(
-		"Can call handleCancellationSellOrder and check if order is removed from AuctionDetail order list",
-		() => {
-			// Add user 1 to the store
-			let user = new User("1");
-			user.address = Bytes.fromHexString(addresses.get("userAddress1"));
-			user.auctions = new Array();
-			user.save();
+	test("Can call handleCancellationSellOrder and check if order is removed from AuctionDetail order list", () => {
+		// Add user 1 to the store
+		let user = new User("1");
+		user.address = Bytes.fromHexString(addresses.get("userAddress1"));
+		user.auctions = new Array();
+		user.save();
 
-			// Add user 2 to the store
-			let user2 = new User("2");
-			user2.address = Bytes.fromHexString(addresses.get("userAddress2"));
-			user2.auctions = new Array();
-			user2.save();
+		// Add user 2 to the store
+		let user2 = new User("2");
+		user2.address = Bytes.fromHexString(addresses.get("userAddress2"));
+		user2.auctions = new Array();
+		user2.save();
 
-			// Add a new auction to the store
-			let newAuctionEvent = setupAuction1();
-			handleNewAuction(newAuctionEvent);
+		// Add a new auction to the store
+		let newAuctionEvent = setupAuction1();
+		handleNewAuction(newAuctionEvent);
 
-			// Create a new sell order event
-			let newSellOrderEvent = createNewSellOrderEvent(
-				0x1,
-				0x2,
-				BigInt.fromString("1"),
-				BigInt.fromString("2")
-			);
-			handleNewSellOrder(newSellOrderEvent);
+		// Create a new sell order event
+		let newSellOrderEvent = createNewSellOrderEvent(
+			0x1,
+			0x2,
+			BigInt.fromString("1"),
+			BigInt.fromString("2")
+		);
+		handleNewSellOrder(newSellOrderEvent);
 
-			let auctionDetail = AuctionDetail.load("1");
-			assert.assertNotNull(auctionDetail);
+		let auctionDetail = AuctionDetail.load("1");
+		assert.assertNotNull(auctionDetail);
 
-			let orders = auctionDetail!.orders;
-			// Expect the order to be added to the auctionDetail
-			// Check that order id is `{auctionId}-{sellAmount}-{buyAmount}-{userId}`
-			assert.stringEquals(orders![0], "1-2-1-2");
-			log.info("handleNewSellOrder adds order to AuctionDetail", []);
-			logStore();
+		let orders = auctionDetail!.orders;
+		// Expect the order to be added to the auctionDetail
+		// Check that order id is `{auctionId}-{sellAmount}-{buyAmount}-{userId}`
+		assert.stringEquals(orders![0], "1-2-1-2");
+		log.success("handleNewSellOrder adds order to AuctionDetail", []);
 
-			// Create a new cancel sell order event
-			let cancelSellOrderEvent = createNewCancelOrderEvent(
-				0x1,
-				0x2,
-				BigInt.fromString("1"),
-				BigInt.fromString("2")
-			);
-			handleCancellationSellOrder(cancelSellOrderEvent);
+		// Create a new cancel sell order event
+		let cancelSellOrderEvent = createNewCancelOrderEvent(
+			0x1,
+			0x2,
+			BigInt.fromString("1"),
+			BigInt.fromString("2")
+		);
+		handleCancellationSellOrder(cancelSellOrderEvent);
 
-			auctionDetail = AuctionDetail.load("1");
-			orders = auctionDetail!.orders;
-			// Expect the order to be removed from the auctionDetail
-			assert.assertNull(orders!.length);
-			log.success(
-				"handleCancellationSellOrder removes order from AuctionDetail",
-				[]
-			);
-		},
-		// Add true here as there is currently a bug in the library which cases store.remove
-		// to not work correctly. This test cases will be updated post the fix.
-		true
-	);
+		auctionDetail = AuctionDetail.load("1");
+		orders = auctionDetail!.orders;
+		// Expect the order to be removed from the auctionDetail
+		assert.assertNull(orders!.length);
+		log.success(
+			"handleCancellationSellOrder removes order from AuctionDetail",
+			[]
+		);
+	});
+
+	test("Can call handleClaimedFromOrder and check if order is removed from AuctionDetail ordersWithoutClaimed list", () => {
+		// Add user 1 to the store
+		let user = new User("1");
+		user.address = Bytes.fromHexString(addresses.get("userAddress1"));
+		user.auctions = new Array();
+		user.save();
+
+		// Add user 2 to the store
+		let user2 = new User("2");
+		user2.address = Bytes.fromHexString(addresses.get("userAddress2"));
+		user2.auctions = new Array();
+		user2.save();
+
+		// Add a new auction to the store
+		let newAuctionEvent = setupAuction1();
+		handleNewAuction(newAuctionEvent);
+
+		// Create a new sell order event
+		let newSellOrderEvent = createNewSellOrderEvent(
+			0x1,
+			0x2,
+			BigInt.fromString("1"),
+			BigInt.fromString("2")
+		);
+		handleNewSellOrder(newSellOrderEvent);
+
+		let auctionDetail = AuctionDetail.load("1");
+		assert.assertNotNull(auctionDetail);
+
+		let orders = auctionDetail!.ordersWithoutClaimed;
+		// Expect the order to be added to the auctionDetail
+		// Check that order id is `{auctionId}-{buyAmount}-{sellAmount}-{userId}`
+		assert.stringEquals(orders![0], "1-2-1-2");
+		log.success("handleNewSellOrder adds order to AuctionDetail", []);
+
+		// Create a new claim event
+		let claimEvent = createNewClaimEvent(
+			0x1,
+			0x2,
+			BigInt.fromString("1"),
+			BigInt.fromString("2")
+		);
+		handleClaimedFromOrder(claimEvent);
+
+		auctionDetail = AuctionDetail.load("1");
+		orders = auctionDetail!.ordersWithoutClaimed;
+		// Expect the order to be removed from the auctionDetail
+		assert.assertNull(orders!.length);
+		log.success(
+			"handleClaimedFromOrder removes order from AuctionDetail",
+			[]
+		);
+	});
 });
